@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+
+# Study output. The example layout under experiments/examples stays.
+tuning_runs/
+experiments/*
+!experiments/examples/
+!experiments/examples/**

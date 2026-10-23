@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", ".."]
+addopts = "--strict-markers -v --tb=short"
+markers = [
+    "integration: opt-in Docker and practice-dataset checks for the GATK tuner",
+]

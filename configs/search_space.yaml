@@ -1,0 +1,154 @@
+# Search bounds are inside templates/tool_params.py GATK_QUALITY_PARAMS.
+# The tuner rejects this file if a bound falls outside that whitelist.
+# core-v2 widens the filters that cut false positives. The core-v1 ceilings
+# (confidence 40, mapping quality 30, base quality 20, active probability
+# 0.005) were reached while a practice sample stayed at the 45-point overcall
+# cap, so TPE had no legal point further in that direction. These bounds are
+# still inside the official ranges. They are not a claim that a higher
+# threshold reaches leaderboard ADV. SCORE 0.85.
+# advanced-v2 adds assembly parameters on top of core-v2. A study locked to
+# core-v1 or advanced-v1 needs a new --study name.
+
+core:
+  version: core-v2
+  parameters:
+    standard_min_confidence_threshold_for_calling:
+      type: float
+      low: 20
+      high: 80
+    min_base_quality_score:
+      type: int
+      low: 5
+      high: 40
+    min_mapping_quality_score:
+      type: int
+      low: 10
+      high: 50
+    min_pruning:
+      type: int
+      low: 1
+      high: 8
+    active_probability_threshold:
+      type: float
+      low: 0.0005
+      high: 0.02
+      log: true
+    pcr_indel_model:
+      type: enum
+      choices: ["NONE", "CONSERVATIVE"]
+
+advanced:
+  version: advanced-v2
+  parameters:
+    min_dangling_branch_length:
+      type: int
+      low: 1
+      high: 20
+    recover_all_dangling_branches:
+      type: bool
+    pruning_lod_threshold:
+      type: float
+      low: 0.5
+      high: 10.0
+
+# full-v1 searches every GATK quality key except emit_ref_confidence.
+# That key stays NONE. GVCF and BP_RESOLUTION change the output format,
+# and hap.py scores a variant VCF.
+full:
+  version: full-v1
+  parameters:
+    min_base_quality_score:
+      type: int
+      low: 0
+      high: 50
+    min_mapping_quality_score:
+      type: int
+      low: 0
+      high: 60
+    base_quality_score_threshold:
+      type: int
+      low: 0
+      high: 50
+    standard_min_confidence_threshold_for_calling:
+      type: float
+      low: 0
+      high: 100
+    pcr_indel_model:
+      type: enum
+      choices: ["NONE", "HOSTILE", "AGGRESSIVE", "CONSERVATIVE"]
+    min_pruning:
+      type: int
+      low: 1
+      high: 10
+    max_alternate_alleles:
+      type: int
+      low: 1
+      high: 20
+    min_dangling_branch_length:
+      type: int
+      low: 1
+      high: 20
+    recover_all_dangling_branches:
+      type: bool
+    max_num_haplotypes_in_population:
+      type: int
+      low: 8
+      high: 512
+    adaptive_pruning_initial_error_rate:
+      type: float
+      low: 0.0001
+      high: 0.1
+      log: true
+    pruning_lod_threshold:
+      type: float
+      low: 0.5
+      high: 10.0
+    active_probability_threshold:
+      type: float
+      low: 0.0001
+      high: 0.05
+      log: true
+    min_assembly_region_size:
+      type: int
+      low: 1
+      high: 300
+    max_assembly_region_size:
+      type: int
+      low: 100
+      high: 1000
+    assembly_region_padding:
+      type: int
+      low: 0
+      high: 500
+    pair_hmm_gap_continuation_penalty:
+      type: int
+      low: 1
+      high: 30
+    phred_scaled_global_read_mismapping_rate:
+      type: int
+      low: 10
+      high: 60
+    heterozygosity:
+      type: float
+      low: 0.0001
+      high: 0.01
+      log: true
+    indel_heterozygosity:
+      type: float
+      low: 0.00001
+      high: 0.001
+      log: true
+    sample_ploidy:
+      type: int
+      low: 1
+      high: 10
+    contamination_fraction_to_filter:
+      type: float
+      low: 0.0
+      high: 0.5
+    max_reads_per_alignment_start:
+      type: int
+      low: 0
+      high: 1000
+    dont_use_soft_clipped_bases:
+      type: bool

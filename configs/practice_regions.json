@@ -1,0 +1,379 @@
+{
+  "samples": [
+    {
+      "sample_id": "02082a25-92f4-494f-9426-7912da98ec5b",
+      "chromosome": "chr20",
+      "region": "chr20:11213405-13138779"
+    },
+    {
+      "sample_id": "42984243-4ed4-46c2-a8a5-eb99949e5938",
+      "chromosome": "chr20",
+      "region": "chr20:42619864-44702219"
+    },
+    {
+      "sample_id": "4ccf4da0-337b-4bff-a92e-81de5e271e06",
+      "chromosome": "chr20",
+      "region": "chr20:13972216-15975641"
+    },
+    {
+      "sample_id": "b58ee4b2-e5e4-4273-8743-55a4dbbeb735",
+      "chromosome": "chr20",
+      "region": "chr20:47009981-48883784"
+    },
+    {
+      "sample_id": "d7b99f4a-061c-4202-8b12-2c1425bd4974",
+      "chromosome": "chr20",
+      "region": "chr20:13522546-15723106"
+    },
+    {
+      "sample_id": "24ddc6fa-2b90-41fe-87ce-08872e68e9ca",
+      "chromosome": "chr21",
+      "region": "chr21:18159536-20265497"
+    },
+    {
+      "sample_id": "91287d5f-96d1-48cd-8f02-efd79132ea91",
+      "chromosome": "chr21",
+      "region": "chr21:19858319-21637960"
+    },
+    {
+      "sample_id": "96e0137f-3814-420f-a7d0-0521d483d1dd",
+      "chromosome": "chr21",
+      "region": "chr21:30390706-32453630"
+    },
+    {
+      "sample_id": "a07e8ec0-eca2-4f8e-83a7-9f695e5da829",
+      "chromosome": "chr21",
+      "region": "chr21:30830995-32613027"
+    },
+    {
+      "sample_id": "b0a8ab15-0c6f-4a60-bae9-a25d71534582",
+      "chromosome": "chr21",
+      "region": "chr21:33002301-34986446"
+    },
+    {
+      "sample_id": "065f8426-92fc-411d-ac2d-9a661e7c7cba",
+      "chromosome": "chr22",
+      "region": "chr22:29647792-34647792"
+    },
+    {
+      "sample_id": "121cfe8e-1155-42ae-8449-f598f21bc374",
+      "chromosome": "chr22",
+      "region": "chr22:26454824-31454824"
+    },
+    {
+      "sample_id": "639d5d3d-2f95-43f2-9828-833867d385c6",
+      "chromosome": "chr22",
+      "region": "chr22:30525851-35525851"
+    },
+    {
+      "sample_id": "78be914c-4bd0-4e3f-84ab-420fc8cae329",
+      "chromosome": "chr22",
+      "region": "chr22:18092295-23092295"
+    },
+    {
+      "sample_id": "daa7809f-9c50-40db-b48a-74b8d05d940a",
+      "chromosome": "chr22",
+      "region": "chr22:22083225-27083225"
+    },
+    {
+      "sample_id": "10eff396-4c1a-4117-b762-bc31672463a4",
+      "chromosome": "chr20",
+      "region": "chr20:49532911-54532911"
+    },
+    {
+      "sample_id": "1359e845-f84b-4638-9019-677d6f51e9e5",
+      "chromosome": "chr21",
+      "region": "chr21:35694005-40694005"
+    },
+    {
+      "sample_id": "1ea3ad4e-6bab-488e-8cee-996f036f5532",
+      "chromosome": "chr21",
+      "region": "chr21:31233294-36233294"
+    },
+    {
+      "sample_id": "2ea4a48e-ba7f-43d8-86e7-81ae5a99196f",
+      "chromosome": "chr22",
+      "region": "chr22:29182728-34182728"
+    },
+    {
+      "sample_id": "31ffbca9-4b9e-4a90-9c3a-c748e8fe768d",
+      "chromosome": "chr22",
+      "region": "chr22:29761332-39761332"
+    },
+    {
+      "sample_id": "3e8b14c4-bd48-451a-af1e-bf46c7aac47f",
+      "chromosome": "chr20",
+      "region": "chr20:48860964-53860964"
+    },
+    {
+      "sample_id": "49229268-7969-4451-9c3f-f852f2e983a5",
+      "chromosome": "chr19",
+      "region": "chr19:33409654-43409654"
+    },
+    {
+      "sample_id": "4cef34b3-f18c-4c5d-8fd2-98cfe9d08548",
+      "chromosome": "chr21",
+      "region": "chr21:23757058-28757058"
+    },
+    {
+      "sample_id": "53b66b8d-fb8d-4e59-9762-b588d581621d",
+      "chromosome": "chr21",
+      "region": "chr21:18327404-23327404"
+    },
+    {
+      "sample_id": "650ab30c-dc61-4315-8622-cdbc1a9f7fe6",
+      "chromosome": "chr19",
+      "region": "chr19:12859073-22859073"
+    },
+    {
+      "sample_id": "683e9a16-9b92-4413-94a4-dcb0bf8fc377",
+      "chromosome": "chr20",
+      "region": "chr20:13245202-18245202"
+    },
+    {
+      "sample_id": "85d5b04f-d5fc-424c-a0f3-1e40f8dbe0f6",
+      "chromosome": "chr19",
+      "region": "chr19:36703147-46703147"
+    },
+    {
+      "sample_id": "900d5e46-f390-47de-9881-12b439a97506",
+      "chromosome": "chr22",
+      "region": "chr22:25767990-35767990"
+    },
+    {
+      "sample_id": "91e4b0f9-058f-424d-95d0-77ed43e651db",
+      "chromosome": "chr19",
+      "region": "chr19:30233689-40233689"
+    },
+    {
+      "sample_id": "930086d6-e2b8-489a-af80-d9cfb425ad26",
+      "chromosome": "chr19",
+      "region": "chr19:29492386-39492386"
+    },
+    {
+      "sample_id": "942a5ba6-4efa-4c1e-a12a-cea50ba6045b",
+      "chromosome": "chr20",
+      "region": "chr20:37642625-42642625"
+    },
+    {
+      "sample_id": "95ff4f16-1186-4cd3-b0b2-7cc32bf19dbd",
+      "chromosome": "chr20",
+      "region": "chr20:45790495-50790495"
+    },
+    {
+      "sample_id": "b74d9a4f-4ae7-46b5-bf92-9f228135a74c",
+      "chromosome": "chr19",
+      "region": "chr19:12550995-22550995"
+    },
+    {
+      "sample_id": "ca778398-f2ed-4239-a226-14e1b0867b9b",
+      "chromosome": "chr19",
+      "region": "chr19:13245268-23245268"
+    },
+    {
+      "sample_id": "cc67e1b9-6d8c-4055-90c2-854941c9f281",
+      "chromosome": "chr19",
+      "region": "chr19:31484447-41484447"
+    },
+    {
+      "sample_id": "d031c10d-8f22-410a-b6ba-bc01bb415324",
+      "chromosome": "chr22",
+      "region": "chr22:29132594-39132594"
+    },
+    {
+      "sample_id": "d10ebf25-ba9a-4c41-a10b-25dd24d56b8e",
+      "chromosome": "chr22",
+      "region": "chr22:18806804-28806804"
+    },
+    {
+      "sample_id": "d134b6de-f902-4f7c-bdbc-b2a2d7b2cac8",
+      "chromosome": "chr19",
+      "region": "chr19:13878363-23878363"
+    },
+    {
+      "sample_id": "f0af2ad4-61eb-4ecf-9f0e-5faa288b3a0c",
+      "chromosome": "chr21",
+      "region": "chr21:18431540-23431540"
+    },
+    {
+      "sample_id": "f26c7c4c-0664-48d7-b1f2-e47871527452",
+      "chromosome": "chr19",
+      "region": "chr19:36178867-46178867"
+    },
+    {
+      "sample_id": "10d11cba-72de-4fab-af7e-921976624c56",
+      "chromosome": "chr18",
+      "region": "chr18:65799061-70799061"
+    },
+    {
+      "sample_id": "8c640702-346e-4789-9f99-587320ad742c",
+      "chromosome": "chr18",
+      "region": "chr18:30079679-35079679"
+    },
+    {
+      "sample_id": "6af755e9-8dd4-48a0-94c0-7776e05a663c",
+      "chromosome": "chr18",
+      "region": "chr18:48373751-53373751"
+    },
+    {
+      "sample_id": "9c41d6f1-7dfd-40a1-a971-64b59f2c1725",
+      "chromosome": "chr18",
+      "region": "chr18:34547762-39547762"
+    },
+    {
+      "sample_id": "af7fe13c-102a-4d29-9a24-5fae917108c7",
+      "chromosome": "chr18",
+      "region": "chr18:31635632-36635632"
+    },
+    {
+      "sample_id": "94341ec2-bb59-4e3a-9a0b-bd569afa7fad",
+      "chromosome": "chr19",
+      "region": "chr19:30146730-40146730"
+    },
+    {
+      "sample_id": "b6f5e20c-8c04-4574-b8ed-dd40fc16882b",
+      "chromosome": "chr19",
+      "region": "chr19:41068839-46068839"
+    },
+    {
+      "sample_id": "898e5b0c-3317-406a-a9bd-d2a6d8908ebe",
+      "chromosome": "chr19",
+      "region": "chr19:29333605-34333605"
+    },
+    {
+      "sample_id": "e158ae6d-f39a-4b90-9acb-73c3e2a399b6",
+      "chromosome": "chr19",
+      "region": "chr19:27459458-32459458"
+    },
+    {
+      "sample_id": "fbba1340-806f-411e-b4d4-6ede6ba7e951",
+      "chromosome": "chr19",
+      "region": "chr19:31949229-41949229"
+    },
+    {
+      "sample_id": "4a2eceed-b412-4777-b3ae-0b731359fa2c",
+      "chromosome": "chr20",
+      "region": "chr20:10307405-15307405"
+    },
+    {
+      "sample_id": "519f81b7-868b-4ffe-807b-10889dc4fa2a",
+      "chromosome": "chr20",
+      "region": "chr20:16171575-21171575"
+    },
+    {
+      "sample_id": "30931227-e15f-4249-8980-923c45c49515",
+      "chromosome": "chr20",
+      "region": "chr20:38506378-43506378"
+    },
+    {
+      "sample_id": "ec0d4889-8262-4ffb-9ec8-6d4f3bdb5b4d",
+      "chromosome": "chr20",
+      "region": "chr20:20638536-25638536"
+    },
+    {
+      "sample_id": "78acfe7e-fad3-456c-b5b3-5455ddb03732",
+      "chromosome": "chr20",
+      "region": "chr20:33275544-38275544"
+    },
+    {
+      "sample_id": "53c07b5d-7414-480f-b797-e9b75083b518",
+      "chromosome": "chr21",
+      "region": "chr21:13140295-18140295"
+    },
+    {
+      "sample_id": "d4194a9e-d562-4eed-a929-e8adee8455e2",
+      "chromosome": "chr21",
+      "region": "chr21:28745753-33745753"
+    },
+    {
+      "sample_id": "20c680ed-0c74-4ad5-b796-a4b21ee98e07",
+      "chromosome": "chr21",
+      "region": "chr21:23690723-28690723"
+    },
+    {
+      "sample_id": "dba91a66-b949-4c02-8918-352ffb509b85",
+      "chromosome": "chr21",
+      "region": "chr21:29099973-34099973"
+    },
+    {
+      "sample_id": "9f5bbe93-ac04-41b2-977f-960fc788a793",
+      "chromosome": "chr21",
+      "region": "chr21:27408024-32408024"
+    },
+    {
+      "sample_id": "34fd5ba7-e5f9-4874-b0f4-ad2273a3799b",
+      "chromosome": "chr22",
+      "region": "chr22:29615965-34615965"
+    },
+    {
+      "sample_id": "8d474598-1d86-4f80-b9f6-8419859b81c9",
+      "chromosome": "chr22",
+      "region": "chr22:29394002-34394002"
+    },
+    {
+      "sample_id": "53c4cc51-a6d4-4ca7-b192-068188549e77",
+      "chromosome": "chr22",
+      "region": "chr22:19555316-29555316"
+    },
+    {
+      "sample_id": "cc0593ac-778c-4b81-b218-9ba165475947",
+      "chromosome": "chr22",
+      "region": "chr22:32919186-42919186"
+    },
+    {
+      "sample_id": "5cd07349-9027-4abf-b425-15f485afb4a2",
+      "chromosome": "chr22",
+      "region": "chr22:22530979-32530979"
+    },
+    {
+      "sample_id": "73ff1f26-5575-47ec-8d5a-01638bfd25f7",
+      "chromosome": "chr18",
+      "region": "chr18:63873486-68873486"
+    },
+    {
+      "sample_id": "b0d10c50-2fa3-4386-89d3-ee1cb54b37b7",
+      "chromosome": "chr18",
+      "region": "chr18:62148838-67148838"
+    },
+    {
+      "sample_id": "112675e9-dca9-446b-9da1-b5256e856e7b",
+      "chromosome": "chr18",
+      "region": "chr18:24650291-29650291"
+    },
+    {
+      "sample_id": "3dc78418-e7a3-4d5e-a1cf-4845e55f1885",
+      "chromosome": "chr18",
+      "region": "chr18:27728587-32728587"
+    },
+    {
+      "sample_id": "ec40117f-b4ca-4e92-9b00-b8583cd173e5",
+      "chromosome": "chr18",
+      "region": "chr18:32195475-37195475"
+    },
+    {
+      "sample_id": "d26677fe-b8c2-4b29-a586-6b95f5525647",
+      "chromosome": "chr18",
+      "region": "chr18:69184834-74184834"
+    },
+    {
+      "sample_id": "c84427f7-1901-431c-b3a4-7d33219a41a5",
+      "chromosome": "chr18",
+      "region": "chr18:27601792-32601792"
+    },
+    {
+      "sample_id": "825fa957-4b9d-4275-857f-00432b2ce6b4",
+      "chromosome": "chr18",
+      "region": "chr18:27217326-37217326"
+    },
+    {
+      "sample_id": "b4586068-a5a3-4c13-8881-9defea335a9f",
+      "chromosome": "chr18",
+      "region": "chr18:26935777-36935777"
+    },
+    {
+      "sample_id": "3d4df81d-cb19-4509-8f66-aa056290128e",
+      "chromosome": "chr18",
+      "region": "chr18:26992693-36992693"
+    }
+  ]
+}
