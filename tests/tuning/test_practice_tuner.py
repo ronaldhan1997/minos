@@ -76,9 +76,12 @@ def test_real_miner_config_is_not_rewritten(tmp_path: Path) -> None:
         "max_reads_per_alignment_start",
     ]
     assert len(fixed_names(1)) == 17
-    assert tunable_names(2) == tunable_names(1)
+    assert len(tunable_names(2)) == 15
+    assert tunable_names(2)[:8] == tunable_names(1)
+    assert len(fixed_names(2)) == 10
     for name in ("emit_ref_confidence", "sample_ploidy", "contamination_fraction_to_filter"):
         assert name in fixed_names(1)
+        assert name in fixed_names(2)
 
 
 def test_parser_accepts_plain_and_rich_and_rejects_discards() -> None:
@@ -212,7 +215,7 @@ def test_fake_phase_resumes_and_does_not_touch_the_miner_config(tmp_path: Path) 
     )
     assert again["finished"] == 1
     assert calls["n"] == 1
-    trial = json.loads(next((run_dir / "trials").glob("*/trial.json")).read_text(encoding="utf-8"))
+    trial = json.loads(next((run_dir / "phase1" / "trials").glob("*/trial.json")).read_text(encoding="utf-8"))
     assert len(trial["parameters"]) == 25
     assert trial["suggested_count"] == 8
     assert trial["parameters"]["emit_ref_confidence"] == "NONE"
@@ -304,6 +307,21 @@ def test_promotion_gate_and_export_refusal(tmp_path: Path) -> None:
     assert exported.exists()
     with pytest.raises(TuningError, match="Refusing"):
         export_promoted(run_dir, tmp_path / "configs" / "gatk.conf", exploratory=True)
+
+
+def test_cli_imports_from_the_checkout_root() -> None:
+    import subprocess
+    import sys
+
+    completed = subprocess.run(
+        [sys.executable, "-m", "tuning.cli", "preflight", "--baseline", str(BASELINE)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "ready" in completed.stdout
 
 
 def test_tune_dry_run_needs_no_extra_flags(tmp_path: Path) -> None:

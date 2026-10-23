@@ -1,8 +1,9 @@
 """Run ``bash start-miner.sh --practice`` one evaluation at a time.
 
 Practice mode writes ``score_run/`` next to the sample BAM. A per-trial config
-path does not isolate that directory, so this runner holds one lock and
-refuses ``--workers`` above 1.
+path does not isolate that directory, and a lock inside one ``--run-dir`` does
+not stop a second campaign. Every practice evaluation on a checkout shares
+``datasets/practice/.tuner-practice.lock``. ``--workers`` above 1 is refused.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+from typing import Callable
 
 from tuning.errors import TuningError
 
@@ -39,8 +41,43 @@ def practice_command(repo_root: Path, config_path: Path, sample_id: str) -> list
 _THREAD_LOCK = threading.Lock()
 
 
+def shared_practice_lock_path(repo_root: Path) -> Path:
+    """Lock path shared by every run directory in one Minos checkout."""
+    return (Path(repo_root).resolve() / "datasets" / "practice" / ".tuner-practice.lock")
+
+
+def list_minos_containers() -> set[str] | None:
+    """Names of ``minos-*`` containers, or None when Docker cannot be queried."""
+    try:
+        probe = subprocess.run(
+            ["docker", "ps", "-aq", "--filter", "name=minos-", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if probe.returncode != 0:
+        return None
+    return {line.strip() for line in probe.stdout.splitlines() if line.strip()}
+
+
+def reap_minos_containers(before: set[str], after: set[str]) -> list[str]:
+    """Remove ``minos-*`` containers that appeared during this evaluation."""
+    removed: list[str] = []
+    for name in sorted(after - before):
+        if not name.startswith("minos-") or any(char in name for char in " /\n"):
+            continue
+        try:
+            subprocess.run(["docker", "rm", "-f", name], capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        removed.append(name)
+    return removed
+
+
 class EvaluationLock:
-    """One practice evaluation on this machine at a time."""
+    """Exclusive file lock. Callers pass the checkout-wide practice lock path."""
 
     def __init__(self, path: Path):
         self.path = path
@@ -97,6 +134,7 @@ def run_practice(
     timeout_seconds: int,
     lock_path: Path,
     echo: bool = True,
+    list_containers: Callable[[], set[str] | None] | None = None,
 ) -> tuple[int | None, str, str, float, bool]:
     """Return exit code, stdout, stderr, seconds, and whether the run timed out.
 
@@ -104,7 +142,9 @@ def run_practice(
     child is quiet, because HaplotypeCaller itself does not write to this terminal.
     """
     command = practice_command(repo_root, config_path, sample_id)
+    list_fn = list_containers or list_minos_containers
     with EvaluationLock(lock_path):
+        containers_before = list_fn()
         if echo:
             print(f"[tune] practice {sample_id}  config {config_path}", flush=True)
         started = time.monotonic()
@@ -140,6 +180,10 @@ def run_practice(
         process.wait()
         for thread in threads:
             thread.join(timeout=2)
+        if timed_out and containers_before is not None:
+            containers_after = list_fn()
+            if containers_after is not None:
+                reap_minos_containers(containers_before, containers_after)
         elapsed = time.monotonic() - started
     return process.returncode, "".join(stdout_lines), "".join(stderr_lines), elapsed, timed_out
 
@@ -148,6 +192,11 @@ def _kill_group(process: subprocess.Popen) -> None:
     try:
         os.killpg(process.pid, signal.SIGKILL)
     except ProcessLookupError:
-        process.kill()
+        return
     except PermissionError:
         process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)

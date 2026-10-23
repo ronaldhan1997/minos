@@ -1,8 +1,10 @@
 """Operator commands for the practice-mode GATK tuner.
 
-The command you want is::
-
-    python -m tuning.cli tune
+``tune`` is an exploratory 40-trial, 8-parameter, one-sample search.
+The staged campaign is ``preflight``, ``optimize --phase 1``,
+``optimize --phase 2``, ``validate``, ``report``, and ``export``.
+``pipeline`` prints that campaign and does not start GATK unless
+``--execute`` is set.
 """
 
 from __future__ import annotations
@@ -136,7 +138,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", type=Path, default=None)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    tune = sub.add_parser("tune", help="Search the 8 high-importance GATK parameters.")
+    tune = sub.add_parser(
+        "tune",
+        help=(
+            f"Exploratory search: {DEFAULT_TRIALS} trials, 8 parameters, one default sample. "
+            "Not the 100 + 400 campaign."
+        ),
+    )
     tune.add_argument(
         "--samples",
         default=None,
@@ -156,7 +164,10 @@ def build_parser() -> argparse.ArgumentParser:
     pre.add_argument("--train-samples", type=Path, default=None)
     pre.add_argument("--sample-id", default=None, help="One training UUID. Does not start GATK.")
 
-    opt = sub.add_parser("optimize", help="Search the 8 high-importance parameters.")
+    opt = sub.add_parser(
+        "optimize",
+        help="Phase 1 tunes 8 parameters. Phase 2 tunes those 8 plus 7 more (15 total).",
+    )
     opt.add_argument("--phase", type=int, required=True, choices=(1, 2))
     opt.add_argument("--trials", type=int, required=True)
     opt.add_argument("--train-samples", type=Path, default=None)
@@ -186,12 +197,53 @@ def build_parser() -> argparse.ArgumentParser:
     exp.add_argument("--run-dir", type=Path, required=True)
     exp.add_argument("--output", type=Path, required=True)
     exp.add_argument("--exploratory", action="store_true")
+
+    pipe = sub.add_parser(
+        "pipeline",
+        help="Print the staged campaign. Does not start GATK unless --execute is set.",
+    )
+    pipe.add_argument("--run-dir", type=Path, required=True)
+    pipe.add_argument("--train-samples", type=Path, required=True)
+    pipe.add_argument("--validation-samples", type=Path, default=None)
+    pipe.add_argument("--baseline", type=Path, default=None)
+    pipe.add_argument("--scoring-version", default=None)
+    pipe.add_argument("--phase1-trials", type=int, default=100)
+    pipe.add_argument("--phase2-trials", type=int, default=400)
+    pipe.add_argument("--seed", type=int, default=42)
+    pipe.add_argument("--workers", type=int, default=1)
+    pipe.add_argument("--timeout-seconds", type=int, default=3600)
+    pipe.add_argument("--finalists", type=int, default=5)
+    pipe.add_argument(
+        "--execute",
+        action="store_true",
+        help="Run the campaign. Requires --scoring-version. Omit this to print commands only.",
+    )
+
+    mig = sub.add_parser(
+        "migrate-legacy",
+        help="Archive the old shared trials/ tree. Ambiguous phase histories stay untrusted.",
+    )
+    mig.add_argument("--run-dir", type=Path, required=True)
     return parser
+
+
+def resolve_existing(path: Path) -> Path:
+    """Find a relative sample file from the current directory or ``minos_tuning/``."""
+    if path.is_file() or path.is_absolute():
+        return path
+    fallback = project_root() / path
+    if fallback.is_file():
+        return fallback
+    return path
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        for name in ("train_samples", "validation_samples"):
+            value = getattr(args, name, None)
+            if isinstance(value, Path):
+                setattr(args, name, resolve_existing(value))
         repo = Path(args.repo_root).resolve() if args.repo_root else repo_root_from()
         baseline = _baseline(repo, getattr(args, "baseline", None))
         if args.command == "tune":
@@ -212,6 +264,10 @@ def main(argv: list[str] | None = None) -> int:
             path = export_promoted(args.run_dir, args.output, exploratory=args.exploratory)
             _print({"exported": str(path)})
             return 0
+        if args.command == "pipeline":
+            return _pipeline(args, repo, baseline)
+        if args.command == "migrate-legacy":
+            return _migrate_legacy(args)
     except (TuningError, ScoringVersionAbort) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -221,7 +277,7 @@ def main(argv: list[str] | None = None) -> int:
 def _train_ids(samples: str | None) -> list[str]:
     if not samples:
         return [DEFAULT_SAMPLE]
-    path = Path(samples)
+    path = resolve_existing(Path(samples))
     if path.is_file():
         from tuning.storage import load_sample_file
 
@@ -248,9 +304,19 @@ def _tune(args, repo: Path, baseline: Path) -> int:
         raise TuningError("--trials must be >= 1")
     from tuning.parameters import tunable_names
 
-    names = ", ".join(tunable_names(1))
-    print(f"[tune] searching 8 parameters: {names}", flush=True)
-    print(f"[tune] {args.trials} trials. The other 17 parameters stay at the baseline.", flush=True)
+    names = tunable_names(1)
+    print(
+        f"[tune] exploratory: {args.trials} trials, {len(names)} parameters, "
+        f"{len(samples)} training sample(s).",
+        flush=True,
+    )
+    print(
+        "[tune] This is not the 100-trial phase 1 plus 400-trial phase 2 campaign. "
+        "Use optimize --phase, or pipeline to print that campaign without starting GATK.",
+        flush=True,
+    )
+    print(f"[tune] phase 1 parameters: {', '.join(names)}", flush=True)
+    print("[tune] The other 17 parameters stay at the baseline on phase 1.", flush=True)
     if args.dry_run:
         print(
             f"dry-run: would run {args.trials} trials on {len(samples)} sample(s). GATK is not started.",
@@ -401,6 +467,163 @@ def _report(args) -> int:
     if not summaries:
         raise TuningError(f"{args.run_dir} has no phase trials to report")
     _print({"phases": summaries})
+    return 0
+
+
+def _pipeline(args, repo: Path, baseline: Path) -> int:
+    """Show the staged campaign. ``--execute`` is the only path that starts practice runs."""
+    if args.phase1_trials < 1 or args.phase2_trials < 1:
+        raise TuningError("phase trial counts must be >= 1")
+    if args.workers != 1:
+        raise TuningError("pipeline keeps --workers 1 until practice output isolation is proven")
+    commands = _campaign_commands(args, baseline)
+    if not args.execute:
+        check = preflight(repo, baseline, args.train_samples)
+        _print(
+            {
+                "executes_gatk": False,
+                "note": "pipeline does not start practice evaluations. Pass --execute and --scoring-version to run them.",
+                "commands": commands,
+                "preflight": check,
+            }
+        )
+        return 0 if check["ready"] else 1
+    if not args.scoring_version:
+        raise TuningError("pipeline --execute requires --scoring-version so the campaign pins a confirmed version")
+    code = _optimize(
+        argparse.Namespace(
+            phase=1,
+            trials=args.phase1_trials,
+            train_samples=args.train_samples,
+            run_dir=args.run_dir,
+            scoring_version=args.scoring_version,
+            seed=args.seed,
+            robustness_penalty=None,
+            workers=1,
+            timeout_seconds=args.timeout_seconds,
+            resume=True,
+            dry_run=False,
+        ),
+        repo,
+        baseline,
+    )
+    if code != 0:
+        return code
+    code = _optimize(
+        argparse.Namespace(
+            phase=2,
+            trials=args.phase2_trials,
+            train_samples=args.train_samples,
+            run_dir=args.run_dir,
+            scoring_version=args.scoring_version,
+            seed=args.seed,
+            robustness_penalty=None,
+            workers=1,
+            timeout_seconds=args.timeout_seconds,
+            resume=True,
+            dry_run=False,
+        ),
+        repo,
+        baseline,
+    )
+    if code != 0 or args.validation_samples is None:
+        return code
+    return _validate(
+        argparse.Namespace(
+            run_dir=args.run_dir,
+            validation_samples=args.validation_samples,
+            timeout_seconds=args.timeout_seconds,
+            exploratory=False,
+            finalists=args.finalists,
+        ),
+        repo,
+        baseline,
+    )
+
+
+def _campaign_commands(args, baseline: Path) -> list[list[str]]:
+    common = [sys.executable, "-m", "tuning.cli"]
+    train = str(args.train_samples)
+    run_dir = str(args.run_dir)
+    phase1 = [
+        *common,
+        "optimize",
+        "--phase",
+        "1",
+        "--trials",
+        str(args.phase1_trials),
+        "--train-samples",
+        train,
+        "--run-dir",
+        run_dir,
+        "--baseline",
+        str(baseline),
+        "--workers",
+        "1",
+        "--seed",
+        str(args.seed),
+    ]
+    phase2 = [
+        *common,
+        "optimize",
+        "--phase",
+        "2",
+        "--trials",
+        str(args.phase2_trials),
+        "--resume",
+        "--train-samples",
+        train,
+        "--run-dir",
+        run_dir,
+        "--baseline",
+        str(baseline),
+        "--workers",
+        "1",
+    ]
+    if args.scoring_version:
+        phase1.extend(["--scoring-version", args.scoring_version])
+        phase2.extend(["--scoring-version", args.scoring_version])
+    commands = [
+        [*common, "preflight", "--baseline", str(baseline), "--train-samples", train],
+        phase1,
+        phase2,
+        [*common, "report", "--run-dir", run_dir],
+    ]
+    if args.validation_samples is not None:
+        commands.append(
+            [
+                *common,
+                "validate",
+                "--run-dir",
+                run_dir,
+                "--validation-samples",
+                str(args.validation_samples),
+                "--baseline",
+                str(baseline),
+                "--finalists",
+                str(args.finalists),
+            ]
+        )
+        commands.append(
+            [
+                *common,
+                "export",
+                "--run-dir",
+                run_dir,
+                "--output",
+                str(Path(run_dir) / "final" / "best_validated_gatk.conf"),
+            ]
+        )
+    return commands
+
+
+def _migrate_legacy(args) -> int:
+    from tuning.legacy import migrate_legacy_run
+
+    payload = migrate_legacy_run(args.run_dir)
+    _print(payload)
+    if payload.get("status") == "untrusted":
+        return 2
     return 0
 
 

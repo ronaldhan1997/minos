@@ -21,14 +21,24 @@ from tuning.baseline import canonical_text, config_sha256, load_baseline, write_
 from tuning.errors import ScoringVersionAbort, TuningError
 from tuning.models import EvaluationResult
 from tuning.objective import evaluate_sample, trial_objective
-from tuning.parameters import enqueue_point, fixed_names, merge_candidate, phase_spec, suggest, tunable_names, validate_candidate
-from tuning.practice_runner import assert_workers
+from tuning.legacy import assert_legacy_resolved
+from tuning.parameters import (
+    PHASE2_EXTRA,
+    SEARCH_SPACE_VERSION,
+    enqueue_point,
+    fixed_names,
+    merge_candidate,
+    phase_spec,
+    suggest,
+    tunable_names,
+    validate_candidate,
+)
+from tuning.practice_runner import assert_workers, shared_practice_lock_path
 from tuning.storage import (
     append_jsonl,
     assert_baseline_unchanged,
     atomic_json,
     cache_hit,
-    iter_jsonl,
     read_json,
     result_from_cache,
     snapshot_baseline,
@@ -36,7 +46,8 @@ from tuning.storage import (
     write_trial_config,
 )
 
-EVALUATOR_VERSION = "tuning-0.1.0"
+EVALUATOR_VERSION = "tuning-0.2.0"
+ARTIFACT_LAYOUT = "phase-trials-v1"
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 
@@ -98,6 +109,8 @@ def freeze_manifest(
         "git_dirty": dirty,
         "cache_enabled": commit is not None and dirty is False,
         "evaluator_version": EVALUATOR_VERSION,
+        "search_space_version": SEARCH_SPACE_VERSION,
+        "artifact_layout": ARTIFACT_LAYOUT,
         "phase1_spec_sha256": spec_sha256(1),
         "phase2_spec_sha256": spec_sha256(2),
         "created_at": utc_now(),
@@ -115,6 +128,8 @@ def freeze_manifest(
             "phase1_spec_sha256",
             "phase2_spec_sha256",
             "evaluator_version",
+            "search_space_version",
+            "artifact_layout",
         )
         for key in keys:
             if existing.get(key) != payload[key]:
@@ -174,6 +189,7 @@ def run_phase(
     if trials < 1:
         raise TuningError("trials must be >= 1")
     assert_workers(workers)
+    assert_legacy_resolved(run_dir)
     manifest = freeze_manifest(
         run_dir,
         baseline_path=baseline_path,
@@ -237,21 +253,31 @@ def _enqueue(study: optuna.Study, baseline: dict[str, Any], phase: int, run_dir:
 
 
 def phase1_seed_points(run_dir: Path, baseline: dict[str, Any]) -> list[dict[str, Any]]:
-    """Distinct completed phase-1 configs, best objective first. New keys stay at baseline."""
-    rows = [row for row in iter_jsonl(run_dir / "trial_results.jsonl") if row.get("phase") == 1 and row.get("objective") is not None]
+    """Distinct successful phase-1 configs, best objective first.
+
+    The seven phase-2 fields stay at the baseline on every seed. Failed,
+    incomplete, and invalid records are skipped. The baseline is used when
+    phase 1 produced no usable seed.
+    """
+    from tuning.reports import trial_records
+
+    rows = [row for row in trial_records(run_dir, 1) if row.get("status") == "success" and row.get("objective") is not None]
     rows.sort(key=lambda row: row["objective"], reverse=True)
-    seen: set[str] = set()
+    seen_configs: set[str] = set()
+    seen_points: set[str] = set()
     points: list[dict[str, Any]] = []
-    phase2_names = set(tunable_names(2))
     for row in rows:
         digest = row.get("config_sha256")
-        if not digest or digest in seen:
+        if not digest or digest in seen_configs:
             continue
-        seen.add(digest)
-        values = row.get("parameters") or {}
-        point = {name: values[name] for name in phase2_names if name in values}
-        for name in phase2_names:
-            point.setdefault(name, baseline[name])
+        seen_configs.add(digest)
+        point = _phase2_seed_point(row, baseline)
+        if point is None:
+            continue
+        signature = json.dumps(point, sort_keys=True, default=str)
+        if signature in seen_points:
+            continue
+        seen_points.add(signature)
         points.append(point)
         if len(points) >= 8:
             break
@@ -260,6 +286,22 @@ def phase1_seed_points(run_dir: Path, baseline: dict[str, Any]) -> list[dict[str
         if fallback is not None:
             points.append(fallback)
     return points
+
+
+def _phase2_seed_point(row: dict[str, Any], baseline: dict[str, Any]) -> dict[str, Any] | None:
+    parameters = row.get("parameters")
+    if not isinstance(parameters, dict):
+        return None
+    merged = dict(baseline)
+    for name in tunable_names(1):
+        if name not in parameters:
+            return None
+        merged[name] = parameters[name]
+    for name in PHASE2_EXTRA:
+        merged[name] = baseline[name]
+    if validate_candidate(merged, 2):
+        return None
+    return enqueue_point(merged, 2)
 
 
 def _execute_trial(
@@ -279,11 +321,14 @@ def _execute_trial(
     suggested = suggest(trial, phase)
     values = merge_candidate(baseline, suggested)
     errors = validate_candidate(values, phase)
-    trial_dir = run_dir / "trials" / f"{trial.number:06d}"
+    from tuning.reports import trial_dir as phase_trial_dir
+
+    trial_dir = phase_trial_dir(run_dir, phase, trial.number)
     trial_dir.mkdir(parents=True, exist_ok=True)
     record: dict[str, Any] = {
         "phase": phase,
         "trial": trial.number,
+        "artifact_dir": str(trial_dir.relative_to(run_dir)),
         "parameters": values,
         "tunable": sorted(suggested),
         "fixed_count": len(fixed_names(phase)),
@@ -320,7 +365,7 @@ def _execute_trial(
                 config_sha256=digest,
                 expected_version=manifest["scoring_version"],
                 timeout_seconds=timeout_seconds,
-                lock_path=run_dir / "evaluation.lock",
+                lock_path=shared_practice_lock_path(repo_root),
                 log_dir=sample_dir,
                 runner=runner,
             )

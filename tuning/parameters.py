@@ -1,8 +1,13 @@
-"""Search bounds for the eight high-importance GATK parameters.
+"""Versioned search bounds for phase 1 (8 parameters) and phase 2 (15).
 
-The other 17 quality keys stay at the baseline on every trial. Three of those
-are fixed by the scoring setup: ``emit_ref_confidence=NONE``, ``sample_ploidy=2``,
-and ``contamination_fraction_to_filter=0.0``. Every trial config still writes all 25 keys.
+Phase 1 tunes eight high-importance fields. Phase 2 keeps those eight and
+opens seven more. Every other quality key stays at the baseline. Three of
+those are fixed by the scoring setup: ``emit_ref_confidence=NONE``,
+``sample_ploidy=2``, and ``contamination_fraction_to_filter=0.0``. Every
+trial config still writes all 25 keys.
+
+``SEARCH_SPACE_VERSION`` changes when a range changes. Old run manifests
+refuse to resume across that boundary.
 """
 
 from __future__ import annotations
@@ -30,7 +35,18 @@ IMPORTANT_SPEC: dict[str, dict[str, Any]] = {
 }
 
 PHASE1_SPEC = IMPORTANT_SPEC
-PHASE2_EXTRA: dict[str, dict[str, Any]] = {}
+# Initial phase-2 hypotheses. Ranges sit inside the upstream GATK whitelist.
+PHASE2_EXTRA: dict[str, dict[str, Any]] = {
+    "min_dangling_branch_length": {"low": 2, "high": 10},
+    "max_num_haplotypes_in_population": {"low": 64, "high": 256},
+    "assembly_region_padding": {"low": 50, "high": 200},
+    "pair_hmm_gap_continuation_penalty": {"low": 5, "high": 20},
+    "phred_scaled_global_read_mismapping_rate": {"low": 30, "high": 60},
+    "heterozygosity": {"low": 1e-4, "high": 1e-2, "log": True},
+    "indel_heterozygosity": {"low": 1e-5, "high": 1e-3, "log": True},
+}
+PHASE2_SPEC = {**PHASE1_SPEC, **PHASE2_EXTRA}
+SEARCH_SPACE_VERSION = "phase2-15-v1"
 
 FIXED_KEYS = tuple(FIXED_VALUES)
 
@@ -38,7 +54,7 @@ FIXED_KEYS = tuple(FIXED_VALUES)
 def phase_spec(phase: int) -> dict[str, dict[str, Any]]:
     if phase not in (1, 2):
         raise TuningError(f"Phase must be 1 or 2, got {phase}")
-    return dict(IMPORTANT_SPEC)
+    return dict(PHASE1_SPEC if phase == 1 else PHASE2_SPEC)
 
 
 def tunable_names(phase: int) -> list[str]:

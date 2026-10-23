@@ -10,15 +10,22 @@ from typing import Any
 from tuning.storage import atomic_json, read_json
 
 
+def trial_dir(run_dir: Path, phase: int, trial_number: int) -> Path:
+    """Phase-scoped artifact directory. Phase 1 trial 0 does not share a path with phase 2 trial 0."""
+    return run_dir / f"phase{phase}" / "trials" / f"{trial_number:06d}"
+
+
 def trial_records(run_dir: Path, phase: int) -> list[dict[str, Any]]:
+    """Read only this phase's trial directory. The legacy ``trials/`` tree is ignored."""
     rows: list[dict[str, Any]] = []
-    root = run_dir / "trials"
+    root = run_dir / f"phase{phase}" / "trials"
     if not root.is_dir():
         return rows
     for path in sorted(root.glob("*/trial.json")):
         row = json.loads(path.read_text(encoding="utf-8"))
-        if row.get("phase") == phase:
-            rows.append(row)
+        if row.get("phase") != phase:
+            continue
+        rows.append(row)
     rows.sort(key=lambda row: row.get("trial", 0))
     return rows
 

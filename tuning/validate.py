@@ -10,7 +10,8 @@ from tuning.baseline import load_baseline, write_conf
 from tuning.errors import TuningError
 from tuning.objective import evaluate_sample
 from tuning.parameters import validate_candidate
-from tuning.storage import atomic_json, read_json, utc_now
+from tuning.practice_runner import shared_practice_lock_path
+from tuning.storage import assert_baseline_unchanged, atomic_json, read_json, utc_now
 from utils.path_utils import safe_round_dir_name
 
 MAX_REGRESSION = 0.02
@@ -84,6 +85,8 @@ def run_validation(
             "A one-sample result stays exploratory and is not certified."
         )
     manifest = read_json(run_dir / "manifest.json")
+    if manifest.get("baseline_sha256"):
+        assert_baseline_unchanged(baseline_path, manifest["baseline_sha256"])
     finalists_path = run_dir / "finalists_manifest.json"
     if not finalists_path.exists():
         raise TuningError("finalists_manifest.json is missing. Finish phase 2 before validation.")
@@ -187,7 +190,7 @@ def _score_config(
             config_sha256=digest,
             expected_version=manifest["scoring_version"],
             timeout_seconds=timeout_seconds,
-            lock_path=run_dir / "evaluation.lock",
+            lock_path=shared_practice_lock_path(repo_root),
             log_dir=config_dir / sample_id,
             runner=runner,
         )
